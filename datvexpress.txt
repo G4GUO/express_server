@@ -1,0 +1,10 @@
+#
+# Configuration file
+#
+set freq 1249000000
+set srate 2000000
+set tsock 1314
+set csock 1315
+set fec 1/2
+set level 100
+set ptt tx
