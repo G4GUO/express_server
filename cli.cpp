@@ -100,7 +100,7 @@ int cli_set_cmd( char *wa, char *wb )
         m_threads_running = 0;
         return 0;
     }
-    printcon("Syntax error\n");
+    printcon("Syntax error %s %s\n",wa ,wb);
     return -1;
 }
 //
