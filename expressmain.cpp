@@ -89,6 +89,7 @@ void *udp_thread_blocking( void *arg )
         else
         {
             // Slip bytes until TP alignment
+            printcon("Invalid sync byte %.2X %d\n",b[0],len);
             udp_read_transport( b, 1 );
             rel_buff( b );
         }
