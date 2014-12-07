@@ -52,7 +52,10 @@ void rel_buff(uchar *b)
 void post_buff( uchar *b)
 {
     pthread_mutex_lock( &mutex_tx );
-    m_tx_q.push(b);
+    if(m_tx_q.size() < MAX_Q_LEN)
+        m_tx_q.push(b);
+    else
+        rel_buff(b);// Queue overflow
     pthread_mutex_unlock( &mutex_tx );
 }
 //
