@@ -80,7 +80,7 @@ void *udp_thread_blocking( void *arg )
     {
         b = alloc_buff();
         int len = udp_read_transport( b, TP_SIZE );
-        printcon("packet received %d\n",len);
+//        printcon("packet received %d\n",len);
         if( b[0] == TP_SYNC )
         {
             // Aligned to TP (probably)
