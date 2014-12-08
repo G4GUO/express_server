@@ -36,7 +36,7 @@ void null_pkt( void );
 int  udp_init( void );
 int  udp_read_transport( unsigned char *b, int length );
 
-int  express_main(void);
+int express_main(int argc, char *argv[]);
 void printcon( const char *fmt, ... );
 
 #endif // EXPRESS_SERVER_H

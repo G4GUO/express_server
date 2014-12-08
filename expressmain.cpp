@@ -89,8 +89,36 @@ void *udp_thread_blocking( void *arg )
         else
         {
             // Slip bytes until TP alignment
-            printcon("Invalid sync byte %.2X %d\n",b[0],len);
+            printcon("UDP Invalid sync byte %.2X %d\n",b[0],len);
             udp_read_transport( b, 1 );
+            rel_buff( b );
+        }
+    }
+    return arg;
+}
+//
+// This processes the transport stream from STDIN
+//
+void *stdin_thread_blocking( void *arg )
+{
+    // This blocks
+    uchar *b;
+
+    while( m_threads_running )
+    {
+        b = alloc_buff();
+        int len = fread(b, 1, TP_SIZE, stdin);
+//        printcon("packet received %d\n",len);
+        if( b[0] == TP_SYNC )
+        {
+            // Aligned to TP (probably)
+            post_buff( b );
+        }
+        else
+        {
+            // Slip bytes until TP alignment
+            printcon("STDIN Invalid sync byte %.2X %d\n",b[0],len);
+            len = fread(b, 1, 1, stdin);
             rel_buff( b );
         }
     }
@@ -129,40 +157,65 @@ int initialise_hw(void)
 // If this is sucessfull it blocks in a forever loop
 // otherwise it returns an error
 //
-int express_main(void)
+int express_main(int argc, char *argv[])
 {
+    int stdin_flag = 0;
+    // parse command line
+    for( int i = 1; i < argc; i++ )
+    {
+        if(strcmp(argv[i],"-i")==0)
+        {
+            if(strcmp(argv[i+1],"stdin")==0) stdin_flag = 1;
+        }
+    }
+
     buf_init();
     null_fmt();
 
     if( initialise_hw() == 0 )
     {
-        if( udp_init() == 0 )
+        // Start the process threads
+        m_threads_running = 1;
+
+        if(pthread_create( &m_threads[0], NULL, tx_thread_blocking, NULL ) != 0 )
         {
-            // Start the process threads
-            m_threads_running = 1;
-
-            if(pthread_create( &m_threads[0], NULL, udp_thread_blocking, NULL ) != 0 )
-            {
-                printcon("Unable to start udp thread\n");
-                m_threads_running = 0;
-                return -1;
-            }
-
-            if(pthread_create( &m_threads[0], NULL, tx_thread_blocking, NULL ) != 0 )
-            {
-                printcon("Unable to start tx thread\n");
-                m_threads_running = 0;
-                return -1;
-            }
-
-            if(pthread_create( &m_threads[1], NULL, command_thread_blocking, NULL ) != 0 )
-            {
-                printcon("Unable to start command thread\n");
-                m_threads_running = 0;
-                return -1;
-            }
-            printcon("UDP sockets and process threads are now running\n");
+            printcon("Unable to start tx thread\n");
+            m_threads_running = 0;
+            return -1;
         }
+
+        if(pthread_create( &m_threads[1], NULL, command_thread_blocking, NULL ) != 0 )
+        {
+            printcon("Unable to start command thread\n");
+            m_threads_running = 0;
+            return -1;
+        }
+
+        if( stdin_flag )
+        {
+            if(pthread_create( &m_threads[0], NULL, stdin_thread_blocking, NULL ) != 0 )
+            {
+                printcon("Unable to start stdin thread\n");
+                m_threads_running = 0;
+                return -1;
+            }
+            printcon("STDIN and process threads are now running\n");
+        }
+        else
+        {
+            if( udp_init() == 0 )
+            {
+
+                if(pthread_create( &m_threads[0], NULL, udp_thread_blocking, NULL ) != 0 )
+                {
+                    printcon("Unable to start udp thread\n");
+                    m_threads_running = 0;
+                    return -1;
+                }
+                printcon("UDP sockets and process threads are now running\n");
+            }
+        }
+
         while( m_threads_running )
         {
             sleep(1);

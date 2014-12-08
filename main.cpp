@@ -9,7 +9,7 @@ extern int m_threads_running;
 int main(int argc, char *argv[])
 {
 //    QCoreApplication a(argc, argv);
-   if( express_main() < 0 )
+   if( express_main( argc, argv ) < 0 )
    {
        express_deinit();
        exit(-1);
