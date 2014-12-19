@@ -57,6 +57,7 @@ typedef struct{
 #define IRATE2            0
 #define IRATE4            1
 #define IRATE8            2
+#define IRATE64           3
 
 // DC offset registers
 #define FPGA_I_DC_MSB_REG 4
@@ -93,7 +94,7 @@ int express_write_samples( scmplx *s, int len );
 int express_write_transport_stream( unsigned char *tp, int len );
 void express_insert_bytes(int n);
 void express_deinit(void);
-int  express_init( const char *fx2_filename, const char *fpga_filename);
+int  express_init( const char *fx2_filename, const char *fpga_filename, int nb);
 void express_set_freq( double freq );
 void express_set_level( int level );
 void express_set_fec( int fec );
@@ -101,7 +102,7 @@ void express_enable( void );
 void express_disable( void );
 void express_fpga_reset(void);
 // Program the symbol rate
-int express_set_sr( long double sr );
+int express_set_sr( double sr );
 // Select the channel interpolation rate and filter (of 4)
 void express_set_interp( int interp );
 void express_set_filter( int filter );

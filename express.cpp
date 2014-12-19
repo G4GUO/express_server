@@ -19,6 +19,7 @@ static libusb_device_handle *m_handle;
 static libusb_context       *m_usbctx;
 static sem_t usb_sem;
 static int m_tx_hardware;
+static int m_nb;
 
 #define EXPRESS_DATA 1
 #define EXPRESS_I2C  2
@@ -622,18 +623,16 @@ void express_set_freq( double freq )
 //
 // Routines that affect the FPGA registers
 //
-int express_set_sr( long double sr )
+int express_set_sr( double sr )
 {
     int64_t val;
     int irate,sr_threshold;
     unsigned char msg[3];
+    printf("%f\n",sr);
 
     if( sr == 0 ) return -1;
     if( m_express_status != EXP_OK ) return -1;
 
-    sr = sr * 32;// 4*8 clock rate
-
-    irate = IRATE8;
     if(m_si570_fitted == true )
     {
         sr_threshold = SR_THRESHOLD_SI570_HZ;
@@ -642,24 +641,39 @@ int express_set_sr( long double sr )
     {
         sr_threshold = SR_THRESHOLD_HZ;
     }
-    if( sr < sr_threshold )
+
+    if(m_nb)
     {
-        // We can use x8 interpolator
-        irate = IRATE8;
+        // Fixed rate
+        sr = sr * 4 * 64;
+        irate = IRATE64;
+        if( sr > sr_threshold ) loggerf("Symbol rate too high in NB mode\n");
     }
     else
     {
-        // We can use x4 interpolator
-        sr = sr / 2;
+        // Maximum value
+        sr = sr * 4 * 8;// 4*8 clock rate
+
+        irate = IRATE8;
         if( sr < sr_threshold )
         {
-            irate = IRATE4;
+            // We can use x8 interpolator
+            irate = IRATE8;
         }
         else
         {
-            // We must use the x2 rate interpolator
-            sr = sr/2;
-            irate = IRATE2;
+            // We can use x4 interpolator
+            sr = sr / 2;
+            if( sr < sr_threshold )
+            {
+                irate = IRATE4;
+            }
+            else
+            {
+                // We must use the x2 rate interpolator
+                sr = sr/2;
+                irate = IRATE2;
+            }
         }
     }
     express_set_interp( irate );
@@ -670,7 +684,6 @@ int express_set_sr( long double sr )
         return irate;
     }
     // We need to set the internal SR gen to something
-
     sr = sr/400000000.0;//400 MHz;
     // Turn into a 64 bit number
     val = sr*0xFFFFFFFFFFFFFFFF;
@@ -1218,7 +1231,7 @@ void express_deinit(void)
     m_express_status = EXP_CONF;
 }
 
-int express_init( const char *fx2_filename, const char *fpga_filename)
+int express_init( const char *fx2_filename, const char *fpga_filename, int nb)
 {
     char pathname[256];
     m_express_status = EXP_CONF;
@@ -1226,6 +1239,9 @@ int express_init( const char *fx2_filename, const char *fpga_filename)
 
     m_xfrs_in_progress = 0;
     m_si570_fitted = false;
+
+    // Are we using NB mode ?
+    m_nb = nb;
 
     // Find the board
     if(( m_express_status = express_find())<0)

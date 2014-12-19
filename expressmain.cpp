@@ -142,11 +142,18 @@ void *tx_thread_blocking( void *arg )
     return arg;
 }
 
-int initialise_hw(void)
+int initialise_hw( int nb  )
 {
+    const char *rbf;
+
     printcon("Initialising hardware please wait....\n");
 
-    if(express_init( "datvexpress8.ihx", "datvexpressdvbs.rbf") > 0 )
+    if(nb)
+        rbf = "NarrowbandDVBS.rbf";
+    else
+        rbf = "datvexpressdvbs.rbf";
+
+    if(express_init( "datvexpress8.ihx", rbf, nb ) > 0 )
     {
         cli_read_file("datvexpress.txt");
         return 0;
@@ -160,6 +167,7 @@ int initialise_hw(void)
 int express_main(int argc, char *argv[])
 {
     int stdin_flag = 0;
+    int nb_flag    = 0;
     // parse command line
     for( int i = 1; i < argc; i++ )
     {
@@ -167,12 +175,17 @@ int express_main(int argc, char *argv[])
         {
             if(strcmp(argv[i+1],"stdin")==0) stdin_flag = 1;
         }
+        if(strcmp(argv[i],"-nb")==0)
+        {
+            nb_flag = 1;
+            i++;
+        }
     }
 
     buf_init();
     null_fmt();
 
-    if( initialise_hw() == 0 )
+    if( initialise_hw(nb_flag) == 0 )
     {
         // Start the process threads
         m_threads_running = 1;
