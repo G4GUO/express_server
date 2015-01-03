@@ -25,7 +25,9 @@ set fec     {1/2,2/3,3/4,5/6,7/8}
 # Set the level n from 0 to 100
 set level   {0...100}
 
-# Set the UDP transport stream socket n 
+# Set the UDP transport stream socket n, this command only works from the configuration file
+# datvexpress.txt
+
 set tsock   n
 
 # Go to transmit
