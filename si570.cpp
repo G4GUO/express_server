@@ -4,7 +4,6 @@
 #include <ctype.h>
 #include "si570.h"
 
-typedef long long int64_t;
 
 HsDiv m_hsddiv[N_HSDIV]={{0,4},{1,5},{2,6},{3,7},{5,9},{7,11}};
 

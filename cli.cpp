@@ -17,7 +17,7 @@ int    m_csock;
 int    m_tsock;
 int    m_interpolate;
 
-int cli_set_cmd( char *wa, char *wb )
+int cli_set_cmd( char *wa, char *wb, char *wc )
 {
     if(strncmp(wa,"freq", 4) == 0 )
     {
@@ -95,6 +95,78 @@ int cli_set_cmd( char *wa, char *wb )
             return 0;
         }
     }
+    if(strncmp(wa,"iqcal", 3) == 0 )
+    {
+        if(strncmp(wb,"on", 2) == 0 )
+        {
+            express_set_iqcalibrate(true);
+            return 0;
+        }
+        if(strncmp(wb,"off", 2) == 0 )
+        {
+            express_set_iqcalibrate(false);
+            return 0;
+        }
+    }
+    if(strncmp(wa,"ical", 3) == 0 )
+    {
+        int offset = atoi(wb);
+        express_set_ical(offset);
+        return 0;
+    }
+    if(strncmp(wa,"qcal", 3) == 0 )
+    {
+        int offset = atoi(wb);
+        express_set_qcal(offset);
+        return 0;
+    }
+    if(strncmp(wa,"carrier", 3) == 0 )
+    {
+        if(strncmp(wb,"on", 2) == 0 )
+        {
+            express_set_carrier(true);
+            return 0;
+        }
+        if(strncmp(wb,"off", 2) == 0 )
+        {
+            express_set_carrier(false);
+            return 0;
+        }
+    }
+    if(strncmp(wa,"ramp", 3) == 0 )
+    {
+        if(strncmp(wb,"on", 2) == 0 )
+        {
+            express_set_ramp(true);
+            return 0;
+        }
+        if(strncmp(wb,"off", 2) == 0 )
+        {
+            express_set_ramp(false);
+            return 0;
+        }
+    }
+    if(strncmp(wa,"predist", 3) == 0 )
+    {
+        if(strncmp(wb,"on", 2) == 0 )
+        {
+            express_set_predist(true);
+            return 0;
+        }
+        if(strncmp(wb,"off", 2) == 0 )
+        {
+            express_set_predist(false);
+            return 0;
+        }
+    }
+    if(strncmp(wa,"ptab", 3) == 0 )
+    {
+        int add = atoi(wb);
+        int val = atoi(wc);
+        express_load_ptab(add,val);
+        return 0;
+    }
+
     if(strncmp(wa,"kill", 4) == 0 )
     {
         m_threads_running = 0;
@@ -114,13 +186,14 @@ void cli_get_cmd( char *wa  )
 
 void cli_string( const char *text )
 {
-    char word[3][255];
+    char word[4][255];
+    word[0][0] = word[1][0] = word[2][0] = word[3][0] = 0;
 
     if(text[0] != '#')
     {
-        sscanf(text,"%s %s %s", word[0], word[1], word[2]);
-        if(strncmp(word[0],"set", 3) == 0 ) cli_set_cmd( word[1], word[2]);
-        if(strncmp(word[0],"get", 3) == 0 ) cli_get_cmd( word[1] );
+        sscanf(text,"%s %s %s %s", word[0], word[1], word[2], word[3]);
+        if(strncmp(word[0],"set", 3) == 0 ) cli_set_cmd( word[1], word[2], word[3]);
+        if(strncmp(word[0],"get", 3) == 0 ) cli_get_cmd( word[1]);
     }
 }
 //

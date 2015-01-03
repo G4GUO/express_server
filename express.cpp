@@ -20,6 +20,7 @@ static libusb_context       *m_usbctx;
 static sem_t usb_sem;
 static int m_tx_hardware;
 static int m_nb;
+static unsigned char         m_ancillary;
 
 #define EXPRESS_DATA 1
 #define EXPRESS_I2C  2
@@ -778,7 +779,7 @@ void express_set_fec( int fec )
 //
 // Send calibration information to the FPGA
 //
-void express_load_calibration( void )
+void express_set_ical( int offset )
 {
     short val;
     unsigned char msg[3];
@@ -786,7 +787,7 @@ void express_load_calibration( void )
     if( m_express_status != EXP_OK ) return;
 
     // First do the i channel offset
-    val = 0x8000;// + info.i_chan_dc_offset*4;// bits 1:0 not used
+    val = 0x8000 + offset*4;// bits 1:0 not used
     // Send it
     msg[0]  = FPGA_ADD | I2C_WR;
     // MSB
@@ -800,8 +801,18 @@ void express_load_calibration( void )
     msg[2]  = val&0xFF;
     express_i2c_bulk_transfer( EP1OUT, msg, 3 );
 
+    express_handle_events( 2 );
+
+}
+void express_set_qcal( int offset )
+{
+    short val;
+    unsigned char msg[3];
+
+    if( m_express_status != EXP_OK ) return;
+
     // Now the q channel offset
-    val = 0x8000;// + info.q_chan_dc_offset*4;// bits 1:0 not used
+    val = 0x8000 + offset*4;// bits 1:0 not used
     // Send it
     msg[0]  = FPGA_ADD | I2C_WR;
     // MSB
@@ -815,9 +826,41 @@ void express_load_calibration( void )
     msg[2]  = val&0xFF;
     express_i2c_bulk_transfer( EP1OUT, msg, 3 );
 
-    express_handle_events( 4 );
+    express_handle_events( 2 );
 
 }
+//
+// Send predistortion information to the FPGA
+//
+void express_load_ptab( uchar add, ushort val )
+{
+    unsigned char msg[3];
+
+    if( m_express_status != EXP_OK ) return;
+
+    // First send the table address
+
+    msg[0]  = FPGA_ADD | I2C_WR;
+    msg[1]  = FPGA_PRE_REG;
+    msg[2]  = add;
+    express_i2c_bulk_transfer( EP1OUT, msg, 3 );
+
+    // MSB of value
+    msg[0]  = FPGA_ADD | I2C_WR;
+    msg[1]  = FPGA_PRE_REG + 1;
+    msg[2]  = (val>>8);
+    express_i2c_bulk_transfer( EP1OUT, msg, 3 );
+
+    // LSB of value
+    msg[0]  = FPGA_ADD | I2C_WR;
+    msg[1]  = FPGA_PRE_REG + 2;
+    msg[2]  = val&0xFF;
+    express_i2c_bulk_transfer( EP1OUT, msg, 3 );
+
+    express_handle_events( 3 );
+
+}
+
 void express_set_config_byte( void )
 {
     unsigned char val;
@@ -827,7 +870,7 @@ void express_set_config_byte( void )
 
     val = 0;
     if(m_tx_hardware == HW_EXPRESS_16 ) val |= FPGA_16BIT_MODE;
-    if(m_si570_fitted == true )            val |= FPGA_USE_SI570;
+    if(m_si570_fitted == true )         val |= FPGA_USE_SI570;
     // Send it
     msg[0]  = FPGA_ADD | I2C_WR;
     msg[1]  = FPGA_CONFIG_REG;
@@ -1081,6 +1124,53 @@ void express_receive(void)
     express_handle_events( 1 );
 }
 
+void express_ancillary( void )
+{
+    // Send it
+    uchar msg[3];
+    msg[0]  = FPGA_ADD | I2C_WR;
+    msg[1]  = FPGA_ANC_REG;
+    msg[2]  = m_ancillary;
+    express_i2c_bulk_transfer( EP1OUT, msg, 3 );
+    express_handle_events( 1 );
+}
+
+// Set clear carrier output
+void express_set_carrier( bool b)
+{
+    if(b == true )
+        m_ancillary = m_ancillary |   FPGA_CARRIER;
+    else
+        m_ancillary = m_ancillary & (~FPGA_CARRIER);
+    express_ancillary();
+}
+
+// Set/clear calibration output
+void express_set_iqcalibrate( bool b)
+{
+    if(b == true )
+        m_ancillary = m_ancillary |   FPGA_CALIBRA;
+    else
+        m_ancillary = m_ancillary & (~FPGA_CALIBRA);
+    express_ancillary();
+}
+void express_set_ramp( bool b)
+{
+    if(b == true )
+        m_ancillary = m_ancillary |   FPGA_RAMP;
+    else
+        m_ancillary = m_ancillary & (~FPGA_RAMP);
+    express_ancillary();
+}
+void express_set_predist( bool b)
+{
+    if(b == true )
+        m_ancillary = m_ancillary |   FPGA_PREDIST;
+    else
+        m_ancillary = m_ancillary & (~FPGA_PREDIST);
+    express_ancillary();
+}
+
 //
 // Service all pending transfer buffers, used when system is closing
 //
@@ -1295,9 +1385,10 @@ int express_init( const char *fx2_filename, const char *fpga_filename, int nb)
     // Load the configuration byte
     express_set_config_byte();
     express_wait();
-    // Load FPGA calibration information
-    express_load_calibration();
-    express_wait();
+
+    // Zero the Calibration values
+    express_set_qcal( 0 );
+    express_set_ical( 0 );
 
     // Configure the ad7992 ADC
     express_configure_ad7992();

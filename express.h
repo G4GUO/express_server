@@ -1,5 +1,7 @@
 #ifndef EXPRESS_H
 #define EXPRESS_H
+#include <sys/types.h>
+#include "express_server.h"
 
 #ifndef __SCMPLX__
 typedef struct{
@@ -59,14 +61,25 @@ typedef struct{
 #define IRATE8            2
 #define IRATE64           3
 
+// Ancillary values
+#define FPGA_CARRIER 0x01
+#define FPGA_CALIBRA 0x02
+#define FPGA_RAMP    0x04
+#define FPGA_PREDIST 0x08
+
 // DC offset registers
 #define FPGA_I_DC_MSB_REG 4
 #define FPGA_I_DC_LSB_REG 5
 #define FPGA_Q_DC_MSB_REG 6
 #define FPGA_Q_DC_LSB_REG 7
+// Ancillary register
+#define FPGA_ANC_REG      8
 
 // Symbol rate registers
 #define FPGA_SR_REG       10
+
+// Predistortion register
+#define FPGA_PRE_REG      20
 
 // Iteration rates
 #define SR_THRESHOLD_HZ       120000000
@@ -113,8 +126,9 @@ void express_read_adrf6755_version(void);
 void express_read_ad7992_chans(void);
 // Start the FX2 code running
 void express_run(void);
-// Load calibration values
-void express_load_calibration( void );
+// Load i & q calibration values
+void express_set_ical( int offset );
+void express_set_qcal( int offset );
 // Number of outstanding samples left to send on the hardware
 double express_outstanding_queue_size(void);
 // Can we queue another buffer
@@ -132,5 +146,17 @@ void express_si570_fitted(void);
 void express_transmit(void);
 // Disables the DAC and modulator
 void express_receive(void);
+// Set carrier
+void express_set_carrier( bool b);
+// Set/clear calibration output
+void express_set_iqcalibrate( bool b);
+// Toggle linearisation ramp
+void express_set_ramp( bool b);
+// Switch the predistorter on/off
+void express_set_predist( bool b);
+// Update the predistortion table
+// it is 256 entries long and can only be updated when predistortion is off
+void express_load_ptab( uchar add, ushort val );
+
 
 #endif // FX2USB_H
