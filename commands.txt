@@ -7,6 +7,11 @@
 # echo "set level 50" >> /tmp/expctrl
 #
 #
+# to start the server for narrowband operation 
+# ./express_server -nb
+# To read the transport stream from stdin
+#./express_server -nb -i stdin
+#
 
 # Set the transmit frequency n in Hz  echo "set freq 437000000" >> /tmp/expctrl 
 set freq    n
