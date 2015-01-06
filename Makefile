@@ -13,6 +13,7 @@ clean:
 	rm -f *.o	
 
 install:
-	mv express_server /usr/bin/express_server
+	cp express_server /usr/bin/express_server
 	cp NarrowbandDVBS.rbf /lib/firmware/datvexpress/NarrowbandDVBS.rbf
+	cp datvexpress8.ihx /lib/firmware/datvexpress/datvexpress8.ihx
 
