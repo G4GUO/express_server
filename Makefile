@@ -15,5 +15,6 @@ clean:
 install:
 	cp express_server /usr/bin/express_server
 	cp NarrowbandDVBS.rbf /lib/firmware/datvexpress/NarrowbandDVBS.rbf
+	cp datvexpressdvbs.rbf /lib/firmware/datvexpress/datvexpress.rbf
 	cp datvexpress8.ihx /lib/firmware/datvexpress/datvexpress8.ihx
 
