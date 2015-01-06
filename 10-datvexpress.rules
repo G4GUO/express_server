@@ -1,0 +1,4 @@
+# rule to grant read/write access on DATV-Express to group named express.
+# to use, install this file in /etc/udev/rules.d as 10-express.rules
+ACTION=="add", BUS=="usb", SYSFS{idVendor}=="04b4", SYSFS{idProduct}=="8613", GROUP:="express", MODE:="0666"
+
