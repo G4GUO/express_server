@@ -17,7 +17,7 @@ int    m_csock;
 int    m_tsock;
 int    m_interpolate;
 
-int cli_set_cmd( char *wa, char *wb, char *wc )
+int cli_set_cmd( char *wa, char *wb, char *wc, char *wd )
 {
     if(strncmp(wa,"freq", 4) == 0 )
     {
@@ -162,8 +162,9 @@ int cli_set_cmd( char *wa, char *wb, char *wc )
     if(strncmp(wa,"ptab", 3) == 0 )
     {
         int add = atoi(wb);
-        int val = atoi(wc);
-        express_load_ptab(add,val);
+        int ival = atoi(wc);
+        int qval = atoi(wd);
+        express_load_ptab(add,ival,qval);
         return 0;
     }
 
@@ -186,13 +187,13 @@ void cli_get_cmd( char *wa  )
 
 void cli_string( const char *text )
 {
-    char word[4][255];
-    word[0][0] = word[1][0] = word[2][0] = word[3][0] = 0;
+    char word[5][255];
+    word[0][0] = word[1][0] = word[2][0] = word[3][0] = word[4][0] = 0;
 
     if(text[0] != '#')
     {
-        sscanf(text,"%s %s %s %s", word[0], word[1], word[2], word[3]);
-        if(strncmp(word[0],"set", 3) == 0 ) cli_set_cmd( word[1], word[2], word[3]);
+        sscanf(text,"%s %s %s %s %s", word[0], word[1], word[2], word[3], word[4]);
+        if(strncmp(word[0],"set", 3) == 0 ) cli_set_cmd( word[1], word[2], word[3], word[4]);
         if(strncmp(word[0],"get", 3) == 0 ) cli_get_cmd( word[1]);
     }
 }

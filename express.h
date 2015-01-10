@@ -156,7 +156,7 @@ void express_set_ramp( bool b);
 void express_set_predist( bool b);
 // Update the predistortion table
 // it is 256 entries long and can only be updated when predistortion is off
-void express_load_ptab( uchar add, ushort val );
+void express_load_ptab( uchar add, ushort ival, ushort qval );
 
 
 #endif // FX2USB_H

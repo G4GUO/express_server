@@ -832,7 +832,7 @@ void express_set_qcal( int offset )
 //
 // Send predistortion information to the FPGA
 //
-void express_load_ptab( uchar add, ushort val )
+void express_load_ptab( uchar add, ushort ival, ushort qval )
 {
     unsigned char msg[3];
 
@@ -845,19 +845,32 @@ void express_load_ptab( uchar add, ushort val )
     msg[2]  = add;
     express_i2c_bulk_transfer( EP1OUT, msg, 3 );
 
-    // MSB of value
+    // MSB of I value
     msg[0]  = FPGA_ADD | I2C_WR;
     msg[1]  = FPGA_PRE_REG + 1;
-    msg[2]  = (val>>8);
+    msg[2]  = (ival>>8);
     express_i2c_bulk_transfer( EP1OUT, msg, 3 );
 
-    // LSB of value
+    // LSB of I value
     msg[0]  = FPGA_ADD | I2C_WR;
     msg[1]  = FPGA_PRE_REG + 2;
-    msg[2]  = val&0xFF;
+    msg[2]  = ival&0xFF;
     express_i2c_bulk_transfer( EP1OUT, msg, 3 );
 
-    express_handle_events( 3 );
+    // MSB of Q value
+    msg[0]  = FPGA_ADD | I2C_WR;
+    msg[1]  = FPGA_PRE_REG + 3;
+    msg[2]  = (qval>>8);
+    express_i2c_bulk_transfer( EP1OUT, msg, 3 );
+
+    // LSB of Q value
+    msg[0]  = FPGA_ADD | I2C_WR;
+    msg[1]  = FPGA_PRE_REG + 4;
+    msg[2]  = qval&0xFF;
+    express_i2c_bulk_transfer( EP1OUT, msg, 3 );
+
+
+    express_handle_events( 5 );
 
 }
 
