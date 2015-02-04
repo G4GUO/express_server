@@ -1334,7 +1334,7 @@ void express_deinit(void)
     m_express_status = EXP_CONF;
 }
 
-int express_init( const char *fx2_filename, const char *fpga_filename, int nb)
+int express_init( const char *fx2_filename, const char *fpga_filename, int nb, int si570)
 {
     char pathname[256];
     m_express_status = EXP_CONF;
@@ -1383,7 +1383,7 @@ int express_init( const char *fx2_filename, const char *fpga_filename, int nb)
     // The DATV-Express board should now be in a usuable state both the FX2 and FPGA
     // should be running
     //
-    si570_initialise();
+    if(si570) si570_initialise();
 
     // Send the initial configuration to the Modulator
     express_configure_adrf6755();

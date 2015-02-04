@@ -149,7 +149,7 @@ void *tx_thread_blocking( void *arg )
     return arg;
 }
 
-int initialise_hw( int nb  )
+int initialise_hw( int nb, int si570  )
 {
     const char *rbf;
 
@@ -160,7 +160,7 @@ int initialise_hw( int nb  )
     else
         rbf = "datvexpressdvbs.rbf";
 
-    if(express_init( "datvexpress8.ihx", rbf, nb ) > 0 )
+    if(express_init( "datvexpress8.ihx", rbf, nb, si570 ) > 0 )
     {
         cli_read_file("datvexpress.txt");
         return 0;
@@ -175,6 +175,7 @@ int express_main(int argc, char *argv[])
 {
     int stdin_flag = 0;
     int nb_flag    = 0;
+    int si570_flag = 0;
     // parse command line
     for( int i = 1; i < argc; i++ )
     {
@@ -187,12 +188,17 @@ int express_main(int argc, char *argv[])
             nb_flag = 1;
             i++;
         }
+        if(strcmp(argv[i],"-si570")==0)
+        {
+            si570_flag = 1;
+            i++;
+        }
     }
 
     buf_init();
     null_fmt();
 
-    if( initialise_hw(nb_flag) == 0 )
+    if( initialise_hw(nb_flag,si570_flag) == 0 )
     {
         // Start the process threads
         m_threads_running = 1;

@@ -107,7 +107,7 @@ int express_write_samples( scmplx *s, int len );
 int express_write_transport_stream( unsigned char *tp, int len );
 void express_insert_bytes(int n);
 void express_deinit(void);
-int  express_init( const char *fx2_filename, const char *fpga_filename, int nb);
+int  express_init( const char *fx2_filename, const char *fpga_filename, int nb, int si570);
 void express_set_freq( double freq );
 void express_set_level( int level );
 void express_set_fec( int fec );

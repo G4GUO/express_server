@@ -12,6 +12,8 @@
 # To read the transport stream from stdin
 #./express_server -nb -i stdin
 #
+# If you have a Si570 fitted you need to add -si570 to the command line to enable it
+#
 
 # Set the transmit frequency n in Hz  echo "set freq 437000000" >> /tmp/expctrl 
 set freq    n
