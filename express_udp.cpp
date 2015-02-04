@@ -116,7 +116,7 @@ int udp_send_tp( uchar *buff )
 //
 int udp_read_transport( unsigned char *b, int length )
 {
-    return recvfrom( m_rx_sock[0], b, length, 0,(struct sockaddr *) &m_udp_trans_server, &m_udp_server_len);
+    return recvfrom( m_rx_sock[0], b, length, MSG_WAITALL,(struct sockaddr *) &m_udp_trans_server, &m_udp_server_len);
 }
 int udp_send_tp( unsigned char *buff, int length )
 {
