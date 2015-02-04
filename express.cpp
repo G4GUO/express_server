@@ -629,7 +629,7 @@ int express_set_sr( double sr )
     int64_t val;
     int irate,sr_threshold;
     unsigned char msg[3];
-    printf("%f\n",sr);
+    printcon("Symbol rate %.2f\n",sr);
 
     if( sr == 0 ) return -1;
     if( m_express_status != EXP_OK ) return -1;
