@@ -63,7 +63,6 @@ void *command_thread_blocking( void *arg )
     }
     close(fd);
     unlink(pipename);
-    printcon("Express CLI terminated\n");
     return arg;
 }
 //
@@ -99,7 +98,6 @@ void *udp_thread_blocking( void *arg )
             rel_buff( b );
         }
     }
-    printcon("Express UDP terminated\n");
     return arg;
 }
 //
@@ -128,7 +126,6 @@ void *stdin_thread_blocking( void *arg )
             rel_buff( b );
         }
     }
-    printcon("Express STDIN terminated\n");
     return arg;
 }
 //
@@ -246,6 +243,7 @@ int express_main(int argc, char *argv[])
         {
             sleep(1);
         }
+        printcon("Express Terminated\n");
         return 0;// Success!
     }
     return -1;
