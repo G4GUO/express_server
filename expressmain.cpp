@@ -80,17 +80,24 @@ void *udp_thread_blocking( void *arg )
     {
         b = alloc_buff();
         int len = udp_read_transport( b, TP_SIZE );
-//        printcon("packet received %d\n",len);
-        if( b[0] == TP_SYNC )
+        if( len == TP_SIZE )
         {
-            // Aligned to TP (probably)
-            post_buff( b );
+            if( b[0] == TP_SYNC )
+            {
+                // Aligned to TP (probably)
+                post_buff( b );
+            }
+            else
+            {
+                // Slip bytes until TP alignment
+                printcon("UDP Invalid sync byte %.2X %d\n",b[0],len);
+                udp_read_transport( b, 1 );
+                rel_buff( b );
+            }
         }
         else
         {
-            // Slip bytes until TP alignment
-            printcon("UDP Invalid sync byte %.2X %d\n",b[0],len);
-            udp_read_transport( b, 1 );
+            printcon("Invalid UDP packet length %d\n",len);
             rel_buff( b );
         }
     }
