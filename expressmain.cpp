@@ -61,11 +61,9 @@ void *command_thread_blocking( void *arg )
             nanosleep( &tim, NULL);
         }
     }
-
     close(fd);
-
     unlink(pipename);
-
+    printcon("Express CLI terminated\n");
     return arg;
 }
 //
@@ -101,6 +99,7 @@ void *udp_thread_blocking( void *arg )
             rel_buff( b );
         }
     }
+    printcon("Express UDP terminated\n");
     return arg;
 }
 //
@@ -129,6 +128,7 @@ void *stdin_thread_blocking( void *arg )
             rel_buff( b );
         }
     }
+    printcon("Express STDIN terminated\n");
     return arg;
 }
 //
