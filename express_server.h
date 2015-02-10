@@ -30,11 +30,11 @@ void buf_init(void);
 //
 // Initialise the null packet
 void null_fmt( void );
-void null_pkt( void );
+void null_pkt(void);
 
 
-int  udp_init( void );
-int  udp_read_transport( unsigned char *b, int length );
+int udp_init( void );
+int get_udp_buffer( uchar *b, int len );
 
 int express_main(int argc, char *argv[]);
 void printcon( const char *fmt, ... );

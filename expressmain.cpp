@@ -76,34 +76,17 @@ void *udp_thread_blocking( void *arg )
     while( m_threads_running )
     {
         b = alloc_buff();
-        int len = udp_read_transport( b, TP_SIZE );
-        if( len == TP_SIZE )
-        {
-            if( b[0] == TP_SYNC )
-            {
-                // Aligned to TP (probably)
-                post_buff( b );
-            }
-            else
-            {
-                // Slip bytes until TP alignment
-                printcon("UDP Invalid sync byte %.2X %d\n",b[0],len);
-                for( int i = 0; i < TP_SIZE-1; i++ ){
-                    udp_read_transport( b, 1 );
-                    if(b[0] == TP_SYNC){
-                        udp_read_transport( &b[1], TP_SIZE-1 );
-                        post_buff( b );
-                        return arg;
-                    }
+        get_udp_buffer( b, TP_SIZE );
+        if( b[0] != TP_SYNC ){ // Try to achieve sync
+            for( int i = 0; i < TP_SIZE-1; i++ ){
+                get_udp_buffer( b, 1 );
+                if( b[0] == TP_SYNC ){
+                    get_udp_buffer( b, TP_SIZE - 1 );
                 }
-                rel_buff( b );
             }
         }
-        else
-        {
-            printcon("Invalid UDP packet length %d\n",len);
-            rel_buff( b );
-        }
+        // Queue
+        post_buff( b );
     }
     return arg;
 }
@@ -148,7 +131,10 @@ void *tx_thread_blocking( void *arg )
         if((b=get_buff())!= NULL)
             express_write_transport_stream( b, TP_SIZE );
         else
-            null_pkt();// Underrun
+        {
+            // Underrun
+           null_pkt();
+        }
     }
     return arg;
 }

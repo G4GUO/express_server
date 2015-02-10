@@ -111,10 +111,53 @@ int udp_send_tp( uchar *buff )
 }
 */
 //
+// This is because the Microsoft UDP interface acts on blocks
+// and we want individual transport packets, so we have to buffer them
+// I suspect Linux works in the same way.
+//
+uchar m_udp_buffer[TP_SIZE*128];
+
+int get_udp_buffer( uchar *b, int len )
+{
+    static int bytes_left;
+    static int offset;
+
+    if( bytes_left > len )
+    {
+        for( int i = 0; i < len; i++ ){
+            b[i] = m_udp_buffer[offset++];
+            bytes_left--;
+        }
+    }
+    else
+    {
+        for( int i = 0; i < bytes_left; i++){
+            b[i] = m_udp_buffer[offset++];
+        }
+        int start = bytes_left;
+        // get a new buffer
+        bytes_left = recvfrom( m_rx_sock[0], m_udp_buffer, TP_SIZE*128, 0,(struct sockaddr *) &m_udp_trans_server, &m_udp_server_len);
+        offset     = 0;
+        if(bytes_left > 0 )
+        {
+            for( int i = start; i < len; i++){
+                b[i] = m_udp_buffer[offset++];
+                bytes_left--;
+            }
+        }
+        else
+        {
+            bytes_left = 0;
+        }
+    }
+    return len;
+}
+//
 //
 //
 //
 int udp_read_transport( unsigned char *b, int length )
+
 {
     return recvfrom( m_rx_sock[0], b, length, MSG_WAITALL,(struct sockaddr *) &m_udp_trans_server, &m_udp_server_len);
 }
@@ -138,6 +181,7 @@ int udp_init( void )
     }
 
     // Construct the server sockaddr_in structure
+    m_udp_server_len = sizeof(m_udp_trans_server);
     memset(&m_udp_trans_server, 0, sizeof(m_udp_trans_server));    // Clear struct
     m_udp_trans_server.sin_family      = AF_INET;                  // Internet/IP
     m_udp_trans_server.sin_addr.s_addr = INADDR_ANY;               // IP address

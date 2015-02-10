@@ -1280,6 +1280,7 @@ int express_write_samples( scmplx *s, int len )
 int express_write_transport_stream( unsigned char *tp, int len )
 {
     if( m_express_status != EXP_OK ) return -1;
+    if( tp == NULL ) return -1;
     return express_send_buffer( tp, len );
 }
 //

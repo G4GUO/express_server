@@ -37,5 +37,5 @@ void null_pkt( void )
     update_cont_counter();
     uchar *b = alloc_buff();
     memcpy(b,m_null,TP_SIZE);
-    post_buff( b );
+    post_buff(b);
 }
