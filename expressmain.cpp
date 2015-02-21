@@ -176,12 +176,10 @@ int express_main(int argc, char *argv[])
         if(strcmp(argv[i],"-nb")==0)
         {
             nb_flag = 1;
-            i++;
         }
         if(strcmp(argv[i],"-si570")==0)
         {
             si570_flag = 1;
-            i++;
         }
     }
 
