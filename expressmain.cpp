@@ -166,6 +166,9 @@ int express_main(int argc, char *argv[])
     int stdin_flag = 0;
     int nb_flag    = 0;
     int si570_flag = 0;
+    // Set the umask (so fifo can bw written to by others)
+    umask(0000);
+
     // parse command line
     for( int i = 1; i < argc; i++ )
     {
