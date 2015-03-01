@@ -207,7 +207,7 @@ int cli_string( const char *text )
     return res;
 }
 //
-// Read in a process a buffer from the UDP interface, commands are terminated in \n
+// Read in a process a buffer from the pipe or UDP interface, commands are terminated in \n
 //
 void cli_parse_buffer( char *b, int length )
 {
