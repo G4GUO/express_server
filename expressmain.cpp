@@ -15,7 +15,7 @@
 
 static pthread_t m_threads[3];
 int m_threads_running;
-static int m_verbose;
+static int m_web;
 
 #define CTRL_PIPE_MESG_LEN 40
 
@@ -24,7 +24,7 @@ static int m_verbose;
 //
 void printcon( const char *fmt, ... )
 {
-    if(m_verbose)
+    if(!m_web)
     {
         va_list ap;
         va_start(ap,fmt);
@@ -170,7 +170,7 @@ int express_main(int argc, char *argv[])
     int stdin_flag = 0;
     int nb_flag    = 0;
     int si570_flag = 0;
-    m_verbose      = 0;
+    m_web          = 0;
     // Set the umask (so fifo can bw written to by others)
     umask(0000);
 
@@ -189,12 +189,12 @@ int express_main(int argc, char *argv[])
         {
             si570_flag = 1;
         }
-        if(strcmp(argv[i],"-v")==0)
+        if(strcmp(argv[i],"-web")==0)
         {
-            m_verbose = 1;
+            m_web = 1;
         }
     }
-    if(!m_verbose)
+    if(m_web)
     {
         fclose(stdin);
         fclose(stdout);
