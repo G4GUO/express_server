@@ -16,6 +16,7 @@ int    m_level;
 int    m_csock;
 int    m_tsock;
 int    m_interpolate;
+static char m_word[5][255];
 
 int cli_set_cmd( char *wa, char *wb, char *wc, char *wd )
 {
@@ -190,19 +191,20 @@ int cli_get_cmd( char *wa  )
     wa = wa;
     return 0;
 }
-
+//
+// This is not very safe
+//
 int cli_string( const char *text )
 {
-    char word[5][255];
     int res = 0;
 
-    word[0][0] = word[1][0] = word[2][0] = word[3][0] = word[4][0] = 0;
+    m_word[0][0] = m_word[1][0] = m_word[2][0] = m_word[3][0] = m_word[4][0] = 0;
 
     if(text[0] != '#')
     {
-        sscanf(text,"%s %s %s %s %s", word[0], word[1], word[2], word[3], word[4]);
-        if(strncmp(word[0],"set", 3) == 0 ) res = cli_set_cmd( word[1], word[2], word[3], word[4]);
-        if(strncmp(word[0],"get", 3) == 0 ) res = cli_get_cmd( word[1]);
+        sscanf(text,"%s %s %s %s %s", m_word[0], m_word[1], m_word[2], m_word[3], m_word[4]);
+        if(strncmp(m_word[0],"set", 3) == 0 ) res = cli_set_cmd( m_word[1], m_word[2], m_word[3], m_word[4]);
+        if(strncmp(m_word[0],"get", 3) == 0 ) res = cli_get_cmd( m_word[1] );
     }
     return res;
 }
@@ -220,7 +222,7 @@ void cli_parse_buffer( char *b, int length )
         if(b[i] == '\n')
         {
             buf[buf_len] = 0;// Terminate the string
-            if( cli_string(buf)==LOAD_CONFIG) cli_read_file( CONFIG_FILENAME_S );
+            if( cli_string(buf)==LOAD_CONFIG) cli_read_file( m_word[2] );
             buf_len = 0;// Start a new string
         }
     }
@@ -229,9 +231,15 @@ void cli_parse_buffer( char *b, int length )
 void cli_read_file( const char *filename )
 {
     FILE *fp;
+    const char *fname;
     char text[255];
 
-    if((fp=fopen( filename, "r" ))!=NULL)
+    if( strlen(filename) == 0)
+        fname = CONFIG_FILENAME_S;
+    else
+        fname = filename;
+
+    if((fp=fopen( fname, "r" ))!=NULL)
     {
         while(fgets(text,200,fp) != NULL)
         {
@@ -240,6 +248,6 @@ void cli_read_file( const char *filename )
     }
     else
     {
-        printcon("Unable to open configuration file %s\n",filename);
+        printcon("Unable to open configuration file %s\n",fname);
     }
 }
