@@ -169,7 +169,7 @@ int cli_set_cmd( char *wa, char *wb, char *wc, char *wd )
         return 0;
     }
 
-    if(strncmp(wa,"config", 4) == 0 )
+    if(strncmp(wa,"config", 5) == 0 )
     {
         return LOAD_CONFIG;
     }
