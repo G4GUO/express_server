@@ -176,7 +176,7 @@ int udp_init( void )
     // Create the UDP socket
     if ((m_rx_sock[0] = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
     {
-        printf("Failed create to RX transport socket\n");
+        printcon("Failed create to RX transport socket\n");
         return -1;
     }
 

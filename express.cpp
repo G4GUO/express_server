@@ -25,7 +25,7 @@ static unsigned char         m_ancillary;
 #define EXPRESS_DATA 1
 #define EXPRESS_I2C  2
 
-#define loggerf printf
+#define loggerf printcon
 
 const char *express_firmware_get_path( const char *filename, char *pathname )
 {
