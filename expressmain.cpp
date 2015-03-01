@@ -194,7 +194,12 @@ int express_main(int argc, char *argv[])
             m_verbose = 1;
         }
     }
-
+    if(!m_verbose)
+    {
+        fclose(stdin);
+        fclose(stdout);
+        fclose(stderr);
+    }
     buf_init();
     null_fmt();
 
