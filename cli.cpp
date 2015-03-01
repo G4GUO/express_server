@@ -168,6 +168,11 @@ int cli_set_cmd( char *wa, char *wb, char *wc, char *wd )
         return 0;
     }
 
+    if(strncmp(wa,"config", 4) == 0 )
+    {
+        return LOAD_CONFIG;
+    }
+
     if(strncmp(wa,"kill", 4) == 0 )
     {
         m_threads_running = 0;
@@ -180,22 +185,26 @@ int cli_set_cmd( char *wa, char *wb, char *wc, char *wd )
 // Process commands for retrieving data
 //
 
-void cli_get_cmd( char *wa  )
+int cli_get_cmd( char *wa  )
 {
     wa = wa;
+    return 0;
 }
 
-void cli_string( const char *text )
+int cli_string( const char *text )
 {
     char word[5][255];
+    int res = 0;
+
     word[0][0] = word[1][0] = word[2][0] = word[3][0] = word[4][0] = 0;
 
     if(text[0] != '#')
     {
         sscanf(text,"%s %s %s %s %s", word[0], word[1], word[2], word[3], word[4]);
-        if(strncmp(word[0],"set", 3) == 0 ) cli_set_cmd( word[1], word[2], word[3], word[4]);
-        if(strncmp(word[0],"get", 3) == 0 ) cli_get_cmd( word[1]);
+        if(strncmp(word[0],"set", 3) == 0 ) res = cli_set_cmd( word[1], word[2], word[3], word[4]);
+        if(strncmp(word[0],"get", 3) == 0 ) res = cli_get_cmd( word[1]);
     }
+    return res;
 }
 //
 // Read in a process a buffer from the UDP interface, commands are terminated in \n
@@ -211,7 +220,7 @@ void cli_parse_buffer( char *b, int length )
         if(b[i] == '\n')
         {
             buf[buf_len] = 0;// Terminate the string
-            cli_string(buf);
+            if( cli_string(buf)==LOAD_CONFIG) cli_read_file( CONFIG_FILENAME_S );
             buf_len = 0;// Start a new string
         }
     }
