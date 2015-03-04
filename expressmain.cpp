@@ -143,7 +143,7 @@ void *tx_thread_blocking( void *arg )
     return arg;
 }
 
-int initialise_hw( int nb, int si570  )
+int initialise_hw( const char *fname, int nb, int si570  )
 {
     const char *rbf;
 
@@ -156,7 +156,10 @@ int initialise_hw( int nb, int si570  )
 
     if(express_init( "datvexpress8.ihx", rbf, nb, si570 ) > 0 )
     {
-        cli_read_file("datvexpress.txt");
+        if( fname == NULL)
+            cli_read_file("datvexpress.txt");
+        else
+            cli_read_file(fname);
         return 0;
     }
     return -1;
@@ -170,6 +173,8 @@ int express_main(int argc, char *argv[])
     int stdin_flag = 0;
     int nb_flag    = 0;
     int si570_flag = 0;
+    const char *fname = NULL;
+
     m_web          = 0;
     // Set the umask (so fifo can bw written to by others)
     umask(0000);
@@ -179,7 +184,8 @@ int express_main(int argc, char *argv[])
     {
         if(strcmp(argv[i],"-i")==0)
         {
-            if(strcmp(argv[i+1],"stdin")==0) stdin_flag = 1;
+            if(argc > i+1)
+                if(strcmp(argv[i+1],"stdin")==0) stdin_flag = 1;
         }
         if(strcmp(argv[i],"-nb")==0)
         {
@@ -193,6 +199,10 @@ int express_main(int argc, char *argv[])
         {
             m_web = 1;
         }
+        if(strcmp(argv[i],"-f")==0)
+        {
+            if( argc > i+1 ) fname = argv[i+1];
+        }
     }
     if(m_web)
     {
@@ -203,7 +213,7 @@ int express_main(int argc, char *argv[])
     buf_init();
     null_fmt();
 
-    if( initialise_hw(nb_flag,si570_flag) == 0 )
+    if( initialise_hw( fname, nb_flag,si570_flag) == 0 )
     {
         // Start the process threads
         m_threads_running = 1;
