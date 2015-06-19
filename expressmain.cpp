@@ -146,7 +146,7 @@ void *tx_thread_blocking( void *arg )
 int initialise_hw( const char *fname, int nb, int si570  )
 {
     const char *rbf;
-
+ 
     printcon("Initialising hardware please wait....\n");
 
     if(nb)
@@ -173,6 +173,7 @@ int express_main(int argc, char *argv[])
     int stdin_flag = 0;
     int nb_flag    = 0;
     int si570_flag = 0;
+
     const char *fname = NULL;
 
     m_web          = 0;
@@ -182,27 +183,35 @@ int express_main(int argc, char *argv[])
     // parse command line
     for( int i = 1; i < argc; i++ )
     {
+        int unknown_option = 1;
         if(strcmp(argv[i],"-i")==0)
         {
             if(argc > i+1)
                 if(strcmp(argv[i+1],"stdin")==0) stdin_flag = 1;
+            unknown_option = 0;
         }
         if(strcmp(argv[i],"-nb")==0)
         {
             nb_flag = 1;
+            unknown_option = 0;
         }
         if(strcmp(argv[i],"-si570")==0)
         {
             si570_flag = 1;
+            unknown_option = 0;
         }
         if(strcmp(argv[i],"-web")==0)
         {
             m_web = 1;
+            unknown_option = 0;
         }
         if(strcmp(argv[i],"-f")==0)
         {
             if( argc > i+1 ) fname = argv[i+1];
+            unknown_option = 0;
         }
+        if(unknown_option) printcon("Unknown option %s\n",argv[i]);
+
     }
     if(m_web)
     {

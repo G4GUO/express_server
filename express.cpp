@@ -1374,7 +1374,7 @@ int express_init( const char *fx2_filename, const char *fpga_filename, int nb, i
 //    if(( m_express_status = express_fpga_load( "/home/charles/BATCExpress.rbf"))<0)
     if(( m_express_status = express_fpga_load( express_firmware_get_path(fpga_filename, pathname )))<0)
     {
-        loggerf("FPGA firmware file not found\n");
+        loggerf("FPGA firmware %s file not found\n",fpga_filename);
         return EXP_RBF;
     }
     express_wait();
