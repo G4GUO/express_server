@@ -211,7 +211,6 @@ int express_main(int argc, char *argv[])
             unknown_option = 0;
         }
         if(unknown_option) printcon("Unknown option %s\n",argv[i]);
-
     }
     if(m_web)
     {
