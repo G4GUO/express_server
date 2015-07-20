@@ -6,6 +6,7 @@ typedef unsigned char uchar;
 #define TP_SIZE 188
 #define TP_SYNC 0x47
 #define MAX_Q_LEN 1000
+#define S_VERSION "Ver 1.0"
 
 //
 // Allocate a new buffer

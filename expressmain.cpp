@@ -177,6 +177,8 @@ int express_main(int argc, char *argv[])
     const char *fname = NULL;
 
     m_web          = 0;
+    // Display the version number
+    printcon("%s\n",S_VERSION);
     // Set the umask (so fifo can bw written to by others)
     umask(0000);
 
