@@ -13,6 +13,7 @@ extern int m_threads_running;
 double m_frequency;
 double m_symbol_rate;
 int    m_level;
+uint8_t m_port;
 int    m_csock;
 int    m_tsock;
 int    m_interpolate;
@@ -66,9 +67,9 @@ int cli_set_cmd( char *wa, char *wb, char *wc, char *wd )
     }
     if(strncmp(wa,"level", 5) == 0 )
     {
-        double level = atof(wb);
-        m_level = (level*47.0)/100;
+        m_level = atof(wb);
         if(m_level > 47 ) m_level = 47;
+        if(m_level < 0 ) m_level = 0;
         express_set_level( m_level );
         return 0;
     }
@@ -96,6 +97,14 @@ int cli_set_cmd( char *wa, char *wb, char *wc, char *wd )
             return 0;
         }
     }
+    if(strncmp(wa,"port", 4) == 0 )
+    {
+        m_port = atoi(wb);
+        express_set_ports( m_port );
+     printcon("Set Port %d\n", m_port);
+        return 0;
+    }
+
     if(strncmp(wa,"iqcal", 3) == 0 )
     {
         if(strncmp(wb,"on", 2) == 0 )

@@ -1,7 +1,21 @@
 #ifndef EXPRESS_H
 #define EXPRESS_H
 #include <sys/types.h>
+#include <stdint.h>
+#include <stdio.h>
 #include "express_server.h"
+
+// Error code
+void report_error(int code);
+int get_error(void);
+
+#define ERROR_INVALID_VIDEO_CAPTURE -1001
+#define ERROR_INVALID_AUDIO_CAPTURE -1002
+#define ERROR_FIRMWARE_NOT_FOUND    -1003
+#define ERROR_FPGA_NOT_FOUND        -1004
+#define ERROR_EXPRESS_NOT_FOUND     -1005
+#define ERROR_CONFIG_NOT_FOUND      -1006
+#define ERROR_ILLEGAL_S2_VALUES     -1007
 
 #ifndef __SCMPLX__
 typedef struct{
@@ -11,6 +25,7 @@ typedef struct{
 
 #endif
 
+#define BOOL int
 #define USB_VENDOR     0x4B4
 #define USB_PROD       0x8613
 // Both are out for in add 0x80
@@ -18,7 +33,7 @@ typedef struct{
 #define EP1IN          0x81
 #define EP2OUT         0x02
 
-#define USB_TIMEOUT    1000
+#define USB_TIMEOUT    100
 #define N_USB_TX_BUFFS 20
 //
 // Addresses of various I2C devices on the DATVExpress board
@@ -50,6 +65,7 @@ typedef struct{
 #define FPGA_8BIT_MODE    0x00
 #define FPGA_16BIT_MODE   0x01
 #define FPGA_USE_SI570    0x02
+#define FPGA_NULL_INSERT  0x04
 
 // Filter and interpolator register
 #define FPGA_FIL_REG      1
@@ -59,7 +75,10 @@ typedef struct{
 #define IRATE2            0
 #define IRATE4            1
 #define IRATE8            2
-#define IRATE64           3
+#define IRATE16           3
+#define IRATE32           4
+#define IRATE64           5
+#define IRATEIV           7
 
 // Ancillary values
 #define FPGA_CARRIER 0x01
@@ -82,8 +101,9 @@ typedef struct{
 #define FPGA_PRE_REG      20
 
 // Iteration rates
-#define SR_THRESHOLD_HZ       120000000
-#define SR_THRESHOLD_SI570_HZ 120000000
+#define SR_S2_THRESHOLD_HZ    100000000
+#define SR_S_THRESHOLD_HZ     100000000
+#define SR_THRESHOLD_SI570_HZ 100000000
 
 #define FEC_RATE_12 0
 #define FEC_RATE_23 1
@@ -103,11 +123,15 @@ enum{ HW_EXPRESS_16, HW_EXPRESS_8 };
 #define EXP_RBF  -4
 #define EXP_CONF -5
 
-int express_write_samples( scmplx *s, int len );
-int express_write_transport_stream( unsigned char *tp, int len );
-void express_insert_bytes(int n);
+#define TP_SIZE 188
+#define MAX_Q_LEN 1000
+#define SYNC_BYTE 0x47
+
+int express_write_samples(scmplx *s, int len);
+int express_write_16_bit_samples(scmplx *s, int len);
+int express_write_transport_stream( uint8_t *tp, int len );
 void express_deinit(void);
-int  express_init( const char *fx2_filename, const char *fpga_filename, int nb, int si570);
+int  express_init( const char *fx2, const char *fpga );
 void express_set_freq( double freq );
 void express_set_level( int level );
 void express_set_fec( int fec );
@@ -136,7 +160,7 @@ int express_get_tx_queue_size(void);
 // Release any outstanding transfrt buffers
 void express_release_transfer_buffers(void);
 // Used to send a bulk transfer message to the Express board for I2C transmittal
-int express_i2c_bulk_transfer(int ep, unsigned char *b, int l );
+int express_i2c_bulk_transfer(int ep, uint8_t *b, int l );
 // Polls the event handler, this is needed for I2C messages as they
 // are not handled by the sample transfer routines in Express
 void express_handle_events(int n);
@@ -147,16 +171,37 @@ void express_transmit(void);
 // Disables the DAC and modulator
 void express_receive(void);
 // Set carrier
-void express_set_carrier( bool b);
+void express_set_carrier( BOOL b);
 // Set/clear calibration output
-void express_set_iqcalibrate( bool b);
+void express_set_iqcalibrate( BOOL b);
 // Toggle linearisation ramp
-void express_set_ramp( bool b);
+void express_set_ramp( BOOL b);
 // Switch the predistorter on/off
-void express_set_predist( bool b);
+void express_set_predist( BOOL b);
 // Update the predistortion table
 // it is 256 entries long and can only be updated when predistortion is off
-void express_load_ptab( uchar add, ushort ival, ushort qval );
+void express_load_ptab( uint8_t add, uint16_t ival, uint16_t qval );
+// Used for flow control
+BOOL express_context_available(void);
+// TX port controll for external relays
+void express_set_ports(uint8_t ports);
 
+// Non Express HW prototypes
+uint8_t *alloc_buff(void);
+// Release a buffer
+void rel_buff(uint8_t *b);
+// Post a buffer to the tx queue
+void post_buff( uint8_t *b);
+// Get a buffer from the tx queue
+uint8_t *get_buff(void);
+// Get tx queue size
+int get_buf_qsize(void);
+// Initialise the buffers
+void buf_init(void);
+void null_fmt( void );
+void update_cont_counter( void );
+void null_pkt( void );
+int UDPServerInit(void);
+void udp_new_socket_required(void);
 
 #endif // FX2USB_H

@@ -19,7 +19,6 @@ static libusb_device_handle *m_handle;
 static libusb_context       *m_usbctx;
 static sem_t usb_sem;
 static int m_tx_hardware;
-static int m_nb;
 static unsigned char         m_ancillary;
 
 #define EXPRESS_DATA 1
@@ -390,10 +389,11 @@ void express_configure_adrf6755( void )
      // lock detect
      b[1]=23;b[2]=0x70;
      express_i2c_bulk_transfer( EP1OUT, b, 3 );
-
+    
      // reserved registers
      b[1]=22;b[2]=0x80;
      express_i2c_bulk_transfer( EP1OUT, b, 3 );
+     express_handle_events( 8 );
      b[1]=21;b[2]=0x00;
      express_i2c_bulk_transfer( EP1OUT, b, 3 );
      b[1]=20;b[2]=0x00;
@@ -412,6 +412,7 @@ void express_configure_adrf6755( void )
      // enable attenuator
      b[1] = 14;b[2]=0x80;//1b
      express_i2c_bulk_transfer( EP1OUT, b, 3 );
+     express_handle_events( 8 );
 
      //
      b[1]=13;b[2]=0xE8;
@@ -442,6 +443,7 @@ void express_configure_adrf6755( void )
      // CR7
      b[1]=7;b[2]=0x00;
      express_i2c_bulk_transfer( EP1OUT, b, 3 );
+     express_handle_events( 8 );
 
      // CR6 ?
      b[1]=6;b[2]=0x20;
@@ -480,7 +482,7 @@ void express_configure_adrf6755( void )
      b[1]=29;b[2]=0x81;
      express_i2c_bulk_transfer( EP1OUT, b, 3 );
 
-     express_handle_events( 32 );
+     express_handle_events( 8 );
 }
 void express_read_adrf6755_version(void)
 {
@@ -624,12 +626,37 @@ void express_set_freq( double freq )
 //
 // Routines that affect the FPGA registers
 //
+//
+// Set 1 of 4 filters in the FPGA
+// When in TS mode sets the DVB-S FEC rate.
+//
+void express_set_interp( int interp )
+{
+    unsigned char msg[3];
+
+    if( m_express_status != EXP_OK ) return;
+
+    // Send it
+    msg[0] = FPGA_ADD | I2C_WR;
+    // MSB
+    msg[1] = FPGA_INT_REG;
+    msg[2] = interp;
+
+    express_i2c_bulk_transfer( EP1OUT, msg, 3 );
+    express_handle_events( 1 );
+}
+
+//
+// Routines that affect the FPGA registers
+//
 int express_set_sr( double sr )
 {
-    int64_t val;
-    int irate,sr_threshold;
+    long long val;
+	double clk;
+	int irate;
+	long sr_threshold;
     unsigned char msg[3];
-    printcon("Symbol rate %.2f\n",sr);
+//    printcon("Symbol rate %.2f\n",sr);
 
     if( sr == 0 ) return -1;
     if( m_express_status != EXP_OK ) return -1;
@@ -640,54 +667,93 @@ int express_set_sr( double sr )
     }
     else
     {
-        sr_threshold = SR_THRESHOLD_HZ;
+	sr_threshold = SR_S_THRESHOLD_HZ;
     }
 
-    if(m_nb)
-    {
-        // Fixed rate
-        sr = sr * 4 * 64;
-        irate = IRATE64;
-        if( sr > sr_threshold ) loggerf("Symbol rate too high in NB mode\n");
-    }
-    else
-    {
-        // Maximum value
-        sr = sr * 4 * 8;// 4*8 clock rate
+    // Maximum default values
+	irate = IRATE2;
+	clk = sr * 4 * 2;// 4*2 clock rate
 
-        irate = IRATE8;
-        if( sr < sr_threshold )
-        {
-            // We can use x8 interpolator
-            irate = IRATE8;
-        }
-        else
-        {
-            // We can use x4 interpolator
-            sr = sr / 2;
-            if( sr < sr_threshold )
-            {
-                irate = IRATE4;
-            }
-            else
-            {
-                // We must use the x2 rate interpolator
-                sr = sr/2;
-                irate = IRATE2;
-            }
-        }
-    }
+    if( sr < (sr_threshold/256) )
+	{
+		// We can use x64 interpolator
+		irate = IRATE64;
+		clk = sr * 4 * 64;// 4*64 clock rate
+	}
+	else
+	{
+		if( sr < sr_threshold/128 )
+		{
+			// We can use x32 interpolator
+			irate = IRATE32;
+			clk = sr * 4 * 32;// 4*32 clock rate
+		}
+		else
+		{
+			if( sr < sr_threshold/64 )
+			{
+				// We can use x16 interpolator
+				irate = IRATE16;
+				clk = sr * 4 * 16;// 4*16 clock rate
+			}
+			else
+			{
+				if( sr < sr_threshold/32 )
+				{
+					// We can use x8 interpolator
+					irate = IRATE8;
+					clk = sr * 4 * 8;// 4*8 clock rate
+				}
+				else
+				{
+					// We can use x4 interpolator
+					if( sr < sr_threshold/16 )
+					{
+						irate = IRATE4;
+						clk = sr * 4 * 4;// 4*4 clock rate
+					}
+					else
+					{
+						// We must use the x2 rate interpolator
+						irate = IRATE2;
+						clk = sr * 4 * 2;// 4*2 clock rate
+					}
+				}
+			}
+		}
+	}
+/*
+	if (get_txmode() == M_DVBS2) {
+		// Low rate Interpolators not supported for this mode
+		if (sr < sr_threshold / 32)
+		{
+			// We can use x8 interpolator
+			irate = IRATE8;
+			clk = sr * 4 * 8;// 4*8 clock rate
+		}
+		else
+		{
+			// We can use x4 interpolator
+			if (sr < sr_threshold / 16)
+			{
+				irate = IRATE4;
+				clk = sr * 4 * 4;// 4*4 clock rate
+			}
+			else
+			{
+				// We must use the x2 rate interpolator
+				irate = IRATE2;
+				clk = sr * 4 * 2;// 4*2 clock rate
+			}
+		}
+	}
+*/
     express_set_interp( irate );
-//    printf("Irate %d Srate %f\n",irate, sr);
-    if(m_si570_fitted == true )
-    {
-        si570_set_clock( sr );
-        return irate;
-    }
     // We need to set the internal SR gen to something
-    sr = sr/400000000.0;//400 MHz;
+    //sr = sr/400000000.0;//400 MHz;
     // Turn into a 64 bit number
-    val = sr*0xFFFFFFFFFFFFFFFF;
+    //val = (long long)(sr*0xFFFFFFFFFFFFFFFF);
+	val = (uint64_t)(clk*46116860184.2738790375);
     // Send it
     msg[0]  = FPGA_ADD | I2C_WR;
 
@@ -726,25 +792,6 @@ int express_set_sr( double sr )
     express_handle_events( 8 );
 
     return irate;
-}
-//
-// Set 1 of 4 filters in the FPGA
-// When in TS mode sets the DVB-S FEC rate.
-//
-void express_set_interp( int interp )
-{
-    unsigned char msg[3];
-
-    if( m_express_status != EXP_OK ) return;
-
-    // Send it
-    msg[0] = FPGA_ADD | I2C_WR;
-    // MSB
-    msg[1] = FPGA_INT_REG;
-    msg[2] = interp;
-
-    express_i2c_bulk_transfer( EP1OUT, msg, 3 );
-    express_handle_events( 1 );
 }
 void express_set_filter( int filter )
 {
@@ -1136,7 +1183,6 @@ void express_receive(void)
     express_i2c_bulk_transfer( EP1OUT, b, 2 );
     express_handle_events( 1 );
 }
-
 void express_ancillary( void )
 {
     // Send it
@@ -1148,8 +1194,15 @@ void express_ancillary( void )
     express_handle_events( 1 );
 }
 
+void express_set_ports(uint8_t ports) {
+	if( m_express_status != EXP_OK ) return;
+	m_ancillary = (m_ancillary&0x0F) | (ports<<4);
+	express_ancillary();
+}
+
+
 // Set clear carrier output
-void express_set_carrier( bool b)
+void express_set_carrier( BOOL b)
 {
     if(b == true )
         m_ancillary = m_ancillary |   FPGA_CARRIER;
@@ -1159,7 +1212,7 @@ void express_set_carrier( bool b)
 }
 
 // Set/clear calibration output
-void express_set_iqcalibrate( bool b)
+void express_set_iqcalibrate( BOOL b)
 {
     if(b == true )
         m_ancillary = m_ancillary |   FPGA_CALIBRA;
@@ -1167,7 +1220,7 @@ void express_set_iqcalibrate( bool b)
         m_ancillary = m_ancillary & (~FPGA_CALIBRA);
     express_ancillary();
 }
-void express_set_ramp( bool b)
+void express_set_ramp( BOOL b)
 {
     if(b == true )
         m_ancillary = m_ancillary |   FPGA_RAMP;
@@ -1175,7 +1228,7 @@ void express_set_ramp( bool b)
         m_ancillary = m_ancillary & (~FPGA_RAMP);
     express_ancillary();
 }
-void express_set_predist( bool b)
+void express_set_predist( BOOL b)
 {
     if(b == true )
         m_ancillary = m_ancillary |   FPGA_PREDIST;
@@ -1335,18 +1388,14 @@ void express_deinit(void)
     m_express_status = EXP_CONF;
 }
 
-int express_init( const char *fx2_filename, const char *fpga_filename, int nb, int si570)
+int express_init( const char *fx2_filename, const char *fpga_filename )
 {
     char pathname[256];
     m_express_status = EXP_CONF;
     sem_init( &usb_sem, 0, 0 );
 
     m_xfrs_in_progress = 0;
-    m_si570_fitted = false;
-
-    // Are we using NB mode ?
-    m_nb = nb;
-
+ 
     // Find the board
     if(( m_express_status = express_find())<0)
     {
@@ -1384,7 +1433,6 @@ int express_init( const char *fx2_filename, const char *fpga_filename, int nb, i
     // The DATV-Express board should now be in a usuable state both the FX2 and FPGA
     // should be running
     //
-    if(si570) si570_initialise();
 
     // Send the initial configuration to the Modulator
     express_configure_adrf6755();

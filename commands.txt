@@ -7,12 +7,10 @@
 # echo "set level 50" >> /tmp/expctrl
 #
 #
-# to start the server for narrowband operation 
-# ./express_server -nb
+# to start the server
+# ./express_server
 # To read the transport stream from stdin
-#./express_server -nb -i stdin
-#
-# If you have a Si570 fitted you need to add -si570 to the command line to enable it
+#./express_server -i stdin
 #
 
 # Set the transmit frequency n in Hz  echo "set freq 437000000" >> /tmp/expctrl 
@@ -24,8 +22,8 @@ set srate   n
 # Set the FEC rate 
 set fec     {1/2,2/3,3/4,5/6,7/8}
 
-# Set the level n from 0 to 100
-set level   {0...100}
+# Set the level n from 0 to 47
+set level   {0...47}
 
 # Set the UDP transport stream socket n, this command only works from the configuration file
 # datvexpress.txt
@@ -56,22 +54,8 @@ set car  on
 # Don't send a carrier
 set car off
 
-# Transmit a ramp (the ram rate is set by the symbol rate)
-set ramp on
-
-# Don't transmit a ramp
-set ramp off
-
-# Enable pre-distortion (this won't work is no table values have been loaded)
-set pre  on
-
-# Do not use pre-distotion table
-set pre off
-
-# Set an entry in the pre-distortion look table. There are 256 entries int the table 
-# the first n is the entry number and the second n is the value for that entry and can be 
-# between 0 and and the value is from 0 to 32767
-set ptab n n
+# Set a value to the external port {1,2,4,8}
+set port n
 
 # This command kills the server process
 set kill

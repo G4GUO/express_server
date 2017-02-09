@@ -5,5 +5,5 @@ set freq 146500000
 set srate 333000
 set tsock 1314
 set fec 7/8
-set level 50
+set level 10
 set ptt tx
