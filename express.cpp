@@ -443,11 +443,11 @@ void express_configure_adrf6755( void )
      // CR7
      b[1]=7;b[2]=0x00;
      express_i2c_bulk_transfer( EP1OUT, b, 3 );
-     express_handle_events( 8 );
 
      // CR6 ?
      b[1]=6;b[2]=0x20;
      express_i2c_bulk_transfer( EP1OUT, b, 3 );
+     express_handle_events( 8 );
 
      // CR5 Disable R divider
      b[1]=5;b[2]=0x00;
